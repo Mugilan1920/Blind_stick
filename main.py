@@ -1,3 +1,4 @@
+#Importing Libraries
 import numpy as np
 import argparse
 import pickle
@@ -9,19 +10,25 @@ from collections import deque
 
 #'http://192.168.1.8:8080'
 
+#Creating the Function
 def print_results(video, limit=None):
     # fig=plt.figure(figsize=(16, 30))
     if not os.path.exists('output'):
         os.mkdir('output')
-
+        
+    #Model Loading
     print("Loading model ...")
     model = load_model("C:\\mugilan\\rotaract\\modelnew.h5")
     Q = deque(maxlen=128)
+    
+    #Video Capture
     vs = cv2.VideoCapture('http://192.168.43.1:8080/video')
     writer = None
     (W, H) = (None, None)
     count = 0
     flag = 1
+
+    #Frame Processing Loop
     while True:
         # read the next frame from the file
         (grabbed, frame) = vs.read()
@@ -32,6 +39,8 @@ def print_results(video, limit=None):
             break
 
         # if the frame dimensions are empty, grab them
+        
+        #Frame Preprocessing
         if W is None or H is None:
             (H, W) = frame.shape[:2]
 
@@ -47,6 +56,8 @@ def print_results(video, limit=None):
 
         # make predictions on the frame and then update the predictions
         # queue
+
+        #Model Prediction
         preds = model.predict(np.expand_dims(frame, axis=0))[0]
         #             print("preds",preds)
         Q.append(preds)
@@ -59,6 +70,7 @@ def print_results(video, limit=None):
         label = i
         text_color = (0, 255, 0)  # default : green
 
+        #Violence Detection
         if label:  # Violence prob
             print("violence detected")
             gray = cv2.cvtColor(output, cv2.COLOR_BGR2GRAY)
@@ -81,12 +93,13 @@ def print_results(video, limit=None):
 
 
 
-
+        #No Violence Case
         else:
             print("No violence")
             cv2.imwrite("C:\\mugilan\\rotaract\image_output\\image.png",output)
 
         # check if the video writer is None
+        #Writing Video Output
         if writer is None:
             # initialize our video writer
             fourcc = cv2.VideoWriter_fourcc(*"MJPG")
@@ -96,6 +109,7 @@ def print_results(video, limit=None):
         writer.write(output)
 
         # show the output image
+        #Display and Cleanup
         cv2.imshow("frame",output)
         key = cv2.waitKey(1) & 0xFF
 
@@ -106,7 +120,8 @@ def print_results(video, limit=None):
     #print("[INFO] cleaning up...")
     writer.release()
     vs.release()
-
+    
+#Execution
 V_path = "C:\\mugilan\\rotaract\\Testing videos\\V_19.mp4"
 NV_path = "/nonv.mp4"
 print_results(V_path)
