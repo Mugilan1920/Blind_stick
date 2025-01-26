@@ -15,7 +15,7 @@ def print_results(video, limit=None):
         os.mkdir('output')
 
     print("Loading model ...")
-    model = load_model("D:\\pragatheeshwar\\rotaract\\modelnew.h5")
+    model = load_model("C:\\mugilan\\rotaract\\modelnew.h5")
     Q = deque(maxlen=128)
     vs = cv2.VideoCapture('http://192.168.43.1:8080/video')
     writer = None
@@ -64,7 +64,7 @@ def print_results(video, limit=None):
             gray = cv2.cvtColor(output, cv2.COLOR_BGR2GRAY)
 
             # read the haarcascade to detect the faces in an image
-            face_cascade = cv2.CascadeClassifier('D:\\pragatheeshwar\\rotaract\haarcascade_frontalface_default.xml')
+            face_cascade = cv2.CascadeClassifier('C:\\mugilan\\rotaract\haarcascade_frontalface_default.xml')
 
             # detects faces in the input image
             faces = face_cascade.detectMultiScale(gray, 1.3, 4)
@@ -77,14 +77,14 @@ def print_results(video, limit=None):
                     cv2.rectangle(output, (x, y), (x + w, y + h), (0, 255, 255), 2)
                     face = output[y:y + h, x:x + w]
                     cv2.imshow("Cropped Face", face)
-                    cv2.imwrite("D:\\pragatheeshwar\\rotaract\\face_output\\image.png", face)
+                    cv2.imwrite("C:\\mugilan\\rotaract\\face_output\\image.png", face)
 
 
 
 
         else:
             print("No violence")
-            cv2.imwrite("D:\\pragatheeshwar\\rotaract\image_output\\image.png",output)
+            cv2.imwrite("C:\\mugilan\\rotaract\image_output\\image.png",output)
 
         # check if the video writer is None
         if writer is None:
@@ -107,6 +107,6 @@ def print_results(video, limit=None):
     writer.release()
     vs.release()
 
-V_path = "D:\\pragatheeshwar\\rotaract\\Testing videos\\V_19.mp4"
+V_path = "C:\\mugilan\\rotaract\\Testing videos\\V_19.mp4"
 NV_path = "/nonv.mp4"
 print_results(V_path)
