@@ -1,4 +1,4 @@
-# Third_eye
+# Blind_stick
 Today, the world has about 295 million visually impaired people (VIP). VIP are naturally dependent on others to complete their tasks, not just at a physical level but at Psychological level.
 In this study, we present a novel framework to assist the VIP in object detection and
 recognition, so that they can be aware of their surroundings and navigate independently, GPS and fall detection which keeps their relatives updated of their status. With these the VIPs become more productive and independent.
