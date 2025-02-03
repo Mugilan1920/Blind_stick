@@ -1,127 +1,72 @@
-#Importing Libraries
-import numpy as np
-import argparse
-import pickle
+#Imports
 import cv2
-import os
-import time
-from keras.models import load_model
-from collections import deque
+import pyttsx3
 
-#'http://192.168.1.8:8080'
+#Text-to-Speech Function
+def talk(text):
+    engine = pyttsx3.init()
+    voices = engine.getProperty('voices')
+    engine.setProperty('voice', voices[1].id)
 
-#Creating the Function
-def print_results(video, limit=None):
-    # fig=plt.figure(figsize=(16, 30))
-    if not os.path.exists('output'):
-        os.mkdir('output')
-        
-    #Model Loading
-    print("Loading model ...")
-    model = load_model("C:\\mugilan\\rotaract\\modelnew.h5")
-    Q = deque(maxlen=128)
-    
-    #Video Capture
-    vs = cv2.VideoCapture('http://192.168.43.1:8080/video')
-    writer = None
-    (W, H) = (None, None)
-    count = 0
-    flag = 1
+    engine.setProperty("rate", 200)
+    engine.runAndWait()
+    engine.say(text)
+    engine.runAndWait()
 
-    #Frame Processing Loop
-    while True:
-        # read the next frame from the file
-        (grabbed, frame) = vs.read()
+#Object Detection Function
+def reco():
+    thres = 0.65  # Threshold to detect object
 
-        # if the frame was not grabbed, then we have reached the end
-        # of the stream
-        if not grabbed:
-            break
+    check = []
+    cap = cv2.VideoCapture(0)
+    cap.set(3, 1280)
+    cap.set(4, 720)
+    cap.set(10, 70)
+    classNames = []
+    classFile = 'coco.names.txt'
+    with open(classFile,'rt') as f:
+        classNames = f.read().rstrip('\n').split('\n')
 
-        # if the frame dimensions are empty, grab them
-        
-        #Frame Preprocessing
-        if W is None or H is None:
-            (H, W) = frame.shape[:2]
+        configPath = 'C:\mugilan\Smart India Hack\ssd_mobilenet_v3_large_coco_2020_01_14.pbtxt.txt'
+        weightsPath = 'D:\\pragatheeshwar\\Smart India Hack\\frozen_inference_graph.pb'
 
-        # clone the output frame, then convert it from BGR to RGB
-        # ordering, resize the frame to a fixed 128x128, and then
-        # perform mean subtraction
+        net = cv2.dnn_DetectionModel(weightsPath, configPath)
+        net.setInputSize(320, 320)
+        net.setInputScale(1.0 / 127.5)
+        net.setInputMean((127.5, 127.5, 127.5))
+        net.setInputSwapRB(True)
 
-        output = frame.copy()
-        dummy = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-        frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-        frame = cv2.resize(frame, (128, 128)).astype("float32")
-        frame = frame.reshape(128, 128, 3) / 255
+        #Object Detection Loop
+        while True:
+            success, img = cap.read()
+            classIds, confs, bbox = net.detect(img, confThreshold=thres)
+            #print(classIds, bbox)
 
-        # make predictions on the frame and then update the predictions
-        # queue
-
-        #Model Prediction
-        preds = model.predict(np.expand_dims(frame, axis=0))[0]
-        #             print("preds",preds)
-        Q.append(preds)
-
-        # perform prediction averaging over the current history of
-        # previous predictions
-        results = np.array(Q).mean(axis=0)
-        i = (preds > 0.70)[0]
-        print(i)
-        label = i
-        text_color = (0, 255, 0)  # default : green
-
-        #Violence Detection
-        if label:  # Violence prob
-            print("violence detected")
-            gray = cv2.cvtColor(output, cv2.COLOR_BGR2GRAY)
-
-            # read the haarcascade to detect the faces in an image
-            face_cascade = cv2.CascadeClassifier('C:\\mugilan\\rotaract\haarcascade_frontalface_default.xml')
-
-            # detects faces in the input image
-            faces = face_cascade.detectMultiScale(gray, 1.3, 4)
-            # print('Number of detected faces:', len(faces))
-
-            # loop over all detected faces
-            if len(faces) > 0:
-                for i, (x, y, w, h) in enumerate(faces):
-                    # To draw a rectangle in a face
-                    cv2.rectangle(output, (x, y), (x + w, y + h), (0, 255, 255), 2)
-                    face = output[y:y + h, x:x + w]
-                    cv2.imshow("Cropped Face", face)
-                    cv2.imwrite("C:\\mugilan\\rotaract\\face_output\\image.png", face)
+            if len(classIds) != 0:
+                for classId, confidence, box,i in zip(classIds.flatten(), confs.flatten(), bbox,bbox):
+                    cv2.rectangle(img, box, color=(0, 255, 0), thickness=2)
+                    cv2.putText(img, classNames[classId - 1].upper(), (box[0] + 10, box[1] + 30),
+                                cv2.FONT_HERSHEY_COMPLEX, 1, (0, 255, 0), 2)
+                    cv2.putText(img, str(round(confidence * 100, 2)), (box[0] + 200, box[1] + 30),
+                                cv2.FONT_HERSHEY_COMPLEX, 1, (0, 255, 0), 2)
+                    #cv2.putText(img, str(i), (box[0] + 10, box[1] + 30),
+                                #cv2.FONT_HERSHEY_COMPLEX, 1, (0, 255, 0), 2)
+                    check.append(classIds[0])
 
 
+                    start_point = (14000,0)
+                    end_point = (0,250)
+                    color = (0, 255, 0)
+                    thickness = 2
+                    cv2.line(img,start_point,end_point,color,thickness)
+                if check.count(classIds[0]) <= 2:
+                    talk(str(classNames[classIds[0] - 1])+" detected in few meters")
+            cv2.imshow("Output", img)
+            cv2.waitKey(1)
 
-        #No Violence Case
-        else:
-            print("No violence")
-            cv2.imwrite("C:\\mugilan\\rotaract\image_output\\image.png",output)
-
-        # check if the video writer is None
-        #Writing Video Output
-        if writer is None:
-            # initialize our video writer
-            fourcc = cv2.VideoWriter_fourcc(*"MJPG")
-            writer = cv2.VideoWriter("output/v_output.avi", fourcc, 30, (W, H), True)
-
-        # write the output frame to disk
-        writer.write(output)
-
-        # show the output image
-        #Display and Cleanup
-        cv2.imshow("frame",output)
-        key = cv2.waitKey(1) & 0xFF
-
-        # if the `q` key was pressed, break from the loop
-        if key == ord("q"):
-            break
-    # release the file pointersq
-    #print("[INFO] cleaning up...")
-    writer.release()
-    vs.release()
-    
-#Execution
-V_path = "C:\\mugilan\\rotaract\\Testing videos\\V_19.mp4"
-NV_path = "/nonv.mp4"
-print_results(V_path)
+#Main Execution
+print("listening: ")
+for i in range(100000000):
+    pass
+talk("Opening object detection module")
+reco()
