@@ -28,7 +28,7 @@ def reco():
         classNames = f.read().rstrip('\n').split('\n')
 
         configPath = 'C:\mugilan\Smart India Hack\ssd_mobilenet_v3_large_coco_2020_01_14.pbtxt.txt'
-        weightsPath = 'D:\\pragatheeshwar\\Smart India Hack\\frozen_inference_graph.pb'
+        weightsPath = 'C:\\mugilan\\Smart India Hack\\frozen_inference_graph.pb'
 
         net = cv2.dnn_DetectionModel(weightsPath, configPath)
         net.setInputSize(320, 320)
